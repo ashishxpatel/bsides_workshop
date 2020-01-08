@@ -43,6 +43,6 @@ Instructions on how to deploy cloud infrastructure for the BSides 2020 SF worksh
     }
 ```
 
-10) Let's configure our S3 bucket to send to an SQS queue 
+10) Let's configure our S3 bucket to send to an SNS queue.
 
 9) Now we'll need to configure ingestion to Splunk from CloudTrail, we'll need to create an IAM user that has 
