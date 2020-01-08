@@ -21,4 +21,27 @@ Instructions on how to deploy cloud infrastructure for the BSides 2020 SF worksh
 
 8) Hit ```install app from file``` while inside of Splunk and install the provided tar file. 
 
+9) Enable self signed cert for the Splunk server so it can connect to the Amazon API.
+
+9) Let's go into the AWS console and configure our CloudTrail to pipe new event notifications into an SNS queue and we'll name it ```bsides-topic```
+
+9) Edit the access policy on your SNS topic to include the following statement:
+```{
+      "Sid": "publish-from-s3",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": "SNS:Publish",
+      "Resource": "arn:aws:sns:us-west-2:<your_account_id>:bsides-topic",
+      "Condition": {
+        "ArnLike": {
+          "aws:SourceArn": "arn:aws:s3:::bsides-trail"
+        }
+      }
+    }
+```
+
+10) Let's configure our S3 bucket to send to an SQS queue 
+
 9) Now we'll need to configure ingestion to Splunk from CloudTrail, we'll need to create an IAM user that has 
