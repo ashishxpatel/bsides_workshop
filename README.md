@@ -19,13 +19,13 @@ Instructions on how to deploy cloud infrastructure for the BSides 2020 SF worksh
 
 ## Splunk Configuration 
 
-8) Hit ```install app from file``` while inside of Splunk and install the provided tar file. 
+1) Hit ```install app from file``` while inside of Splunk and install the provided tar file. 
 
-9) Enable self signed cert for the Splunk server so it can connect to the Amazon API.
+2) Enable self signed cert for the Splunk server so it can connect to the Amazon API.
 
-9) Let's go into the AWS console and configure our CloudTrail to pipe new event notifications into an SNS queue and we'll name it ```bsides-topic```
+3) Let's go into the AWS console and configure our CloudTrail to pipe new event notifications into an SNS queue and we'll name it ```bsides-topic```.
 
-9) Edit the access policy on your SNS topic to include the following statement:
+4) Edit the access policy on your SNS topic to include the following statement:
 ```
     {
       "Sid": "publish-from-s3",
@@ -43,6 +43,4 @@ Instructions on how to deploy cloud infrastructure for the BSides 2020 SF worksh
     }
 ```
 
-10) Let's configure our S3 bucket to send to an SNS queue.
-
-9) Now we'll need to configure ingestion to Splunk from CloudTrail, we'll need to create an IAM user that has 
+5) Now we'll create 2 different SQS queues for Splunk, one deadletter queue and a normal one. Follow the default configurations and create one queue called ```bsides-queue``` and one named ```bsides-deadletter```. Once this is completed, you can configure the ```bsides-queue``` to have the deadletter queue be the other one. Enable redrive policy on this queue and add in 500 for the field for maximum retries. On this main queue, we will copy the ARN from our SNS topic and add it to the allowed permissions, so that SNS can push to the queue. Finally we will subscribe this SQS queue to our bsides SNS topic. Once this is all set and done you should now slowly begin to see CloudTrail log events coming in through Splunk. 
