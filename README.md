@@ -26,7 +26,8 @@ Instructions on how to deploy cloud infrastructure for the BSides 2020 SF worksh
 9) Let's go into the AWS console and configure our CloudTrail to pipe new event notifications into an SNS queue and we'll name it ```bsides-topic```
 
 9) Edit the access policy on your SNS topic to include the following statement:
-```{
+```
+    {
       "Sid": "publish-from-s3",
       "Effect": "Allow",
       "Principal": {
