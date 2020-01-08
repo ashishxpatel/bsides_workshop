@@ -1,6 +1,7 @@
 # bsides_workshop
 Instructions on how to deploy cloud infrastructure for the BSides 2020 SF workshop demo:
 
+## Initial Infrastructure with Terraform (Splunk Server, Automation Server, CloudTrail)
 
 1) Install Terraform on your local CLI - https://learn.hashicorp.com/terraform/getting-started/install.html. 
 
@@ -15,6 +16,8 @@ Instructions on how to deploy cloud infrastructure for the BSides 2020 SF worksh
 6) Once everything checks out we can then run a ```terraform apply``` to configure our resources inside of AWS.
 
 7) Now we'll have our Splunk server and CloudTrail created with the appropriate S3 bucket. Next we'll want to install the AWS add on inside of Splunk so we can easily configure our CloudTrail ingestion.
+
+## Splunk Configuration 
 
 8) Hit ```install app from file``` while inside of Splunk and install the provided tar file. 
 
