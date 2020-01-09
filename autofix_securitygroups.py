@@ -7,6 +7,7 @@ logger.setLevel(logging.INFO)
 
 # Function to inspect each security group
 
+PORT_BLACKLIST = ["45008"]
 
 def inspect_security_group(ec2, sg_id):
     sg = ec2.SecurityGroup(sg_id)
@@ -26,7 +27,7 @@ def inspect_security_group(ec2, sg_id):
                 ip_proto,
                 to_port,
             )
-            if sg.ip_permissions[i]["IpRanges"][j]["CidrIp"] == "0.0.0.0/0":
+            if sg.ip_permissions[i]["IpRanges"][j]["CidrIp"] == "0.0.0.0/0" and to_port in PORT_BLACKLIST:
                 open_cidrs.append(cidr_string)
     return open_cidrs
 
