@@ -145,7 +145,6 @@ resource "aws_cloudtrail" "bsides" {
 }
 
 resource "aws_s3_bucket" "bsides_trail" {
-  bucket        = "bsides-trail"
   force_destroy = true
   policy = <<POLICY
 {
