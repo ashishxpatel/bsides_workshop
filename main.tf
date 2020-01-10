@@ -136,6 +136,14 @@ resource "aws_security_group" "automation_allow" {
 
 data "aws_caller_identity" "current" {}
 
+resource "aws_cloudtrail" "bsides" {
+  name                          = "bsides-trail"
+  s3_bucket_name                = "${aws_s3_bucket.cloudtrail_logs.id}"
+  s3_key_prefix                 = "prefix"
+  include_global_service_events = true
+  is_multi_region_trail = true
+}
+
 resource "aws_s3_bucket" "cloudtrail_logs" {
   bucket_prefix = "bsides-trail-"
   force_destroy = true
