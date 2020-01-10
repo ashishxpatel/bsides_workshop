@@ -74,7 +74,7 @@ $ git clone https://github.com/xxx/bsides_workshop.git
 ```
 FIXME: maybe change the name of this repo to be the same-ish as the workshop title.
 
-2) Install Terraform
+2) Install Terraform & the AWS CLI 
 https://learn.hashicorp.com/terraform/getting-started/install.html.
 
 On MacOS:
@@ -83,6 +83,13 @@ $ curl -O https://releases.hashicorp.com/terraform/0.12.19/terraform_0.12.19_dar
 $ unzip terraform_0.12.19_darwin_amd64.zip
 $ rm terraform_0.12.19_darwin_amd64.zip
 
+```
+On MacOS:
+```bash
+$ pip3 --version
+$ curl -O https://bootstrap.pypa.io/get-pip.py
+$ python3 get-pip.py --user
+$ pip3 install awscli --upgrade --user
 ```
 
 FIXME: Once details are ironed out, we can go through these steps and take screenshots
