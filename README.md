@@ -70,7 +70,7 @@ Instructions on how to deploy cloud infrastructure.
 1) Clone this repo to download all course materials:
 
 ```bash
-$ git clone https://github.com/xxx/bsides_workshop.git
+$ git clone https://github.com/ashishpatel-git/bsides_workshop.git
 ```
 FIXME: maybe change the name of this repo to be the same-ish as the workshop title.
 
