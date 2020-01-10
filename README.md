@@ -82,8 +82,10 @@ On MacOS:
 $ curl -O https://releases.hashicorp.com/terraform/0.12.19/terraform_0.12.19_darwin_amd64.zip
 $ unzip terraform_0.12.19_darwin_amd64.zip
 $ rm terraform_0.12.19_darwin_amd64.zip
+$ export PATH=$PATH:`pwd`
 
 ```
+
 On MacOS:
 ```bash
 $ pip3 --version
