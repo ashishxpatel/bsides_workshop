@@ -72,6 +72,11 @@ Instructions on how to deploy cloud infrastructure.
 ```bash
 $ git clone https://github.com/ashishpatel-git/bsides_workshop.git
 ```
+
+```bash
+$ cd bsides_workshop
+```
+
 FIXME: maybe change the name of this repo to be the same-ish as the workshop title.
 
 2) Install Terraform & the AWS CLI 
