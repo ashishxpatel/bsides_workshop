@@ -157,7 +157,7 @@ resource "aws_s3_bucket" "bsides_trail" {
               "Service": "cloudtrail.amazonaws.com"
             },
             "Action": "s3:GetBucketAcl",
-            "Resource": "arn:aws:s3:::bsides-trail"
+            "Resource": "arn:aws:s3:::${aws_s3_bucket.bsides_trail.id}"
         },
         {
             "Sid": "AWSCloudTrailWrite",
