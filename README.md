@@ -82,7 +82,7 @@ FIXME: maybe change the name of this repo to be the same-ish as the workshop tit
 2) Install Terraform & the AWS CLI 
 https://learn.hashicorp.com/terraform/getting-started/install.html.
 
-On MacOS:
+Terraform on MacOS/Linux:
 ```bash
 $ curl -O https://releases.hashicorp.com/terraform/0.12.19/terraform_0.12.19_darwin_amd64.zip
 $ unzip terraform_0.12.19_darwin_amd64.zip
@@ -91,19 +91,29 @@ $ export PATH=$PATH:`pwd`
 
 ```
 
-On MacOS:
+AWS CLI on MacOS/Linux:
 ```bash
 $ pip3 --version
 $ curl -O https://bootstrap.pypa.io/get-pip.py
 $ python3 get-pip.py --user
 $ pip3 install awscli --upgrade --user
 ```
+To validate the installation perform the following:
+
+```aws --version```
+```terraform --version```
+
+AWS Doc:
+https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html#install-bundle-macos
+
+Additionally, you can install AWS CLI & Terraform via brew as well if you're into hops ;)
+
 
 FIXME: Once details are ironed out, we can go through these steps and take screenshots
 
-3) Create an IAM admin user called "terraform" with the "Administrator" policy attached.
+3) Head to https://console.aws.amazon.com/iam after authentication. Create an IAM admin user called "terraform" with the "Administrator" policy attached. Ensure that you are in the `us-west-2` region or Oregon inside the AWS console.
 
-4) Use the AWS secrets to input them into your local AWS CLI configuration for TF to use.
+4) Use the AWS secrets to input them into your local AWS CLI configuration for Terraform to use. Copy and paste the credentials (Access Key ID and Secret) from the user generation into a notepad. You can do this by running ```aws configure``` and you'll place the secrets locally on your machine for Terraform to use.
 
 5) Run ```terraform init``` to initialize your TF directory. Once that is completed, you can run a ```terraform plan``` commmand to see what all the potential infrastructure will look like.
 
