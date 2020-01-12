@@ -65,68 +65,112 @@ Students should be comfortable with basic Python scripting (at a minimum, able t
 # Cloud Infrastructure Setup
 Instructions on how to deploy cloud infrastructure.
 
-## Initial Infrastructure with Terraform (Splunk Server, Automation Server, CloudTrail)
+## Local Development Setup
 
-1) Clone this repo to download all course materials:
-
-```bash
-$ git clone https://github.com/ashishpatel-git/bsides_workshop.git
-```
+#### Clone this repo to download all course materials:
 
 ```bash
-$ cd bsides_workshop
+git clone https://github.com/ashishpatel-git/bsides_workshop.git
+cd bsides_workshop
 ```
 
 FIXME: maybe change the name of this repo to be the same-ish as the workshop title.
 
-2) Install Terraform & the AWS CLI 
-https://learn.hashicorp.com/terraform/getting-started/install.html.
+#### Install Terraform
 
-Terraform on MacOS/Linux:
+MacOS/Linux Quickstart:
 ```bash
-$ curl -O https://releases.hashicorp.com/terraform/0.12.19/terraform_0.12.19_darwin_amd64.zip
-$ unzip terraform_0.12.19_darwin_amd64.zip
-$ rm terraform_0.12.19_darwin_amd64.zip
-$ export PATH=$PATH:`pwd`
-
+curl -O https://releases.hashicorp.com/terraform/0.12.19/terraform_0.12.19_darwin_amd64.zip
+unzip terraform_0.12.19_darwin_amd64.zip
+rm terraform_0.12.19_darwin_amd64.zip
+export PATH=$PATH:`pwd`
+terraform --version # verify installation
 ```
 
-AWS CLI on MacOS/Linux:
+More information: https://learn.hashicorp.com/terraform/getting-started/install.html
+
+#### Install AWS CLI and Python development environment
+
 ```bash
-$ pip3 --version
-$ curl -O https://bootstrap.pypa.io/get-pip.py
-$ python3 get-pip.py --user
-$ pip3 install awscli --upgrade --user
+python3 -m venv venv
+source venv/bin/activate
+curl -O https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py
+pip3 install awscli boto3 jira
+aws --version
+python3 -c "import boto3; print(boto3.__version__)"
+python3 -c "import jira; print(jira.__version__)"
 ```
-To validate the installation perform the following:
 
-```aws --version```
-```terraform --version```
+More information (AWS): https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html#install-bundle-macos
+More information (virtualenvironment): https://docs.python.org/3/library/venv.html
 
-AWS Doc:
-https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html#install-bundle-macos
+#### Subscribe Splunk Enterprise in AWS Marketplace
+We will be using the Splunk Enterprise AMI from the AWS Marketplace, which requires subscribing before we can use it. Visit https://aws.amazon.com/marketplace/pp?sku=7azvchdfh74dcxoiwjhztgpel, click `Continue to Subscribe`, and accept the terms.
 
-Additionally, you can install AWS CLI & Terraform via brew as well if you're into hops ;)
+This does _not_ cost anything and does not provide a Splunk license, it only allows us to use the AMI (which does come with a baked-in trial license that we will be using).
 
+#### Other options and platforms
+You can install AWS CLI, Terraform, and pip with your package manager of choice (brew, yum, apt-get, etc.). Using a Python virtualenvironment is not strictly required, but we do strongly suggest that you use a venv and install dependencies in it with pip.
 
 FIXME: Once details are ironed out, we can go through these steps and take screenshots
 
-3) Head to https://console.aws.amazon.com/iam after authentication. Create an IAM admin user called "terraform" with the "Administrator" policy attached. Ensure that you are in the `us-west-2` region or Oregon inside the AWS console.
+## Infrastructure with Terraform (Splunk Server, Automation Server, CloudTrail)
 
-4) Use the AWS secrets to input them into your local AWS CLI configuration for Terraform to use. Copy and paste the credentials (Access Key ID and Secret) from the user generation into a notepad. You can do this by running ```aws configure``` and you'll place the secrets locally on your machine for Terraform to use.
+#### Log in to your AWS account
+https://console.aws.amazon.com/iam
 
-5) Run ```terraform init``` to initialize your TF directory. Once that is completed, you can run a ```terraform plan``` commmand to see what all the potential infrastructure will look like.
+#### Create Terraform user
+Navigate to `Access management` -> `Users` -> `Add user` and create a user named `terraform` with `Programmatic access`.
 
-6) Once everything checks out we can then run a ```terraform apply``` to configure our resources inside of AWS.
+!(/images/adduser1.jpg?raw=true "Add user")
 
-7) Now we'll have our Splunk server and CloudTrail created with the appropriate S3 bucket. Next we'll want to install the AWS add on inside of Splunk so we can easily configure our CloudTrail ingestion.
+Attach the AdministratorAccess policy
 
-## Splunk Configuration
+!(/images/adduser2.jpg?raw=true "Add user")
 
-1) Hit ```install app from file``` while inside of Splunk and install the provided tar file.
+Proceed through the "Add tags" page, review your configuration, and create the user. _Download or otherwise save the account credentials now, as they will not be available again._
 
-2) Enable self signed cert for the Splunk server so it can connect to the Amazon API.
+#### Add AWS credentials
+Run `aws configure` and input your access key ID and secret. This will save your credentials to a config file at `~/.aws/credentials`.
 
+```
+$ aws configure
+AWS Access Key ID [None]: KEYGOESHERE
+AWS Secret Access Key [None]: SECRETGOESHERE
+Default region name [None]: us-west-2
+Default output format [None]:
+```
+
+Note that we are using the `us-west-2` AWS region as it is geographically nearby and typically one of the least expensive.
+
+#### Create Infrastructure with Terraform
+Initialize your Terraform directory:
+```
+terraform init
+```
+
+See what Terraform is going to do:
+```
+terraform plan
+```
+
+Check that the plan looks good, then apply the plan to create these resources in AWS:
+
+```
+terraform apply
+```
+
+Now we'll have our Splunk server and CloudTrail created with the appropriate S3 bucket.
+
+When we're done with this infrastructure, we will take it all down with:
+
+```
+# Don't run this yet!
+terraform destroy
+```
+
+## Configure CloudTrail logging and notifications
 3) Let's go into the AWS console and configure our CloudTrail to pipe new event notifications into an SNS queue and we'll name it ```bsides-topic```.
 
 4) Edit the access policy on your SNS topic to include the following statement:
@@ -138,7 +182,7 @@ FIXME: Once details are ironed out, we can go through these steps and take scree
         "Service": "s3.amazonaws.com"
       },
       "Action": "SNS:Publish",
-      "Resource": "arn:aws:sns:us-west-2:<your_account_id>:bsides-topic",
+      "Resource": "arn:aws:sns:us-west-2:$YOUR_ACCOUNT_ID:bsides-topic",
       "Condition": {
         "ArnLike": {
           "aws:SourceArn": "arn:aws:s3:::bsides-trail"
@@ -146,17 +190,124 @@ FIXME: Once details are ironed out, we can go through these steps and take scree
       }
     }
 ```
+* FIXME: Need to add a lot of explanation about where/how to do this. Expect tons of problems with JSON formatting and adding a comma in the right place. Could we just do it with Python instead?
 
 5) Now we'll create 2 different SQS queues for Splunk, one deadletter queue and a normal one. Follow the default configurations and create one queue called ```bsides-queue``` and one named ```bsides-deadletter```. Once this is completed, you can configure the ```bsides-queue``` to have the deadletter queue be the other one. Enable redrive policy on this queue and add in 500 for the field for maximum retries. On this main queue, we will copy the ARN from our SNS topic and add it to the allowed permissions, so that SNS can push to the queue. Finally we will subscribe this SQS queue to our bsides SNS topic. Once this is all set and done you should now slowly begin to see CloudTrail log events coming in through Splunk.
 
+* FIXME: Need to break this out into steps with screenshots. It's a _lot_ for a single step.
+* FIXME: Could we just do this with Python?
+
+## CloudTrail? SNS? SQS? Looking under the hood with Python
+Let's take a look under the hood at what's happening with our logs. First we'll take a look at what queues we have available and print the URL of the `bsides-queue` queue.
+
+```python
+import json
+import boto3
+
+sqs = boto3.client('sqs')
+queues = sqs.list_queues()
+print(queues)
+
+# Output will be something like:
+# {'QueueUrls': ['https://us-west-2.queue.amazonaws.com/ACCOUNT_ID/bsides-deadletter',
+#   'https://us-west-2.queue.amazonaws.com/ACCOUNT_ID/bsides-queue'],
+#  'ResponseMetadata': {'RequestId': '78e1edc5-beb1-5667-b6c6-bb514fd2de26',
+#   'HTTPStatusCode': 200,
+#   'HTTPHeaders': {'x-amzn-requestid': '78e1edc5-beb1-5667-b6c6-bb514fd2de26',
+#    'date': 'Sun, 12 Jan 2020 10:04:19 GMT',
+#    'content-type': 'text/xml',
+#    'content-length': '419'},
+#   'RetryAttempts': 0}}
+
+queue_url = [q for q in queues['QueueUrls'] if q.endswith('bsides-queue')][0]
+print(queue_url)
+
+# Output:
+# https://us-west-2.queue.amazonaws.com/ACCOUNT_ID/bsides-queue
+```
+
+Next, let's pull a message from the queue and see what it looks like.
+
+```python
+message = sqs.receive_message(QueueUrl=queue_url)
+# Output will be something like:
+# {'Messages': [{'MessageId': '7de4a3d9-2868-4ece-aeb3-a1460eefb6b3',
+#    'ReceiptHandle': 'AQEBCfZqk25k+7eRX8VM3yRQyEcu0s5zSv2VcI853B6uYJebyg+K8m7HqrhnRZD6syQlYFc7z7cDAh6f6sJ3u+lcTSK3lLdkzaLeUDwdQHgItr0KPy1dNQGkH/WK/Dt/0BANXCvFiyzvOMvTkl9JiYhEzYH9FRbGwW63xUiEsNxYKIr1h73iZ8KCdWpPElGWrY7/l27KOrj4nM0eWWLCEEIInGoG3JEX89X0QCI5AA4YCx/c1yWDx/a/qLYge5DFmTe2WEEDGj3j91x/aQATRC7cunaKKmUp1lviuq0HBexQFvneH36CHq+7a6WSoreHb8CGDpvD3sa8+bLn3Ng6EwORL+ZMh1lQ7aF3YzHUcC8kkm3QHjpv92INlw20ZsrUCMeIrD/wJibluv30Ptc5VUtUlw==',
+#    'MD5OfBody': 'c5b1d12d4bf4913856579c8c29a41df2',
+#    'Body': '{\n  "Type" : "Notification",\n  "MessageId" : "d4ef62a2-b761-565f-ac03-34365d35d874",\n  "TopicArn" : "arn:aws:sns:us-west-2:ACCOUNT_ID:bsides-topic",\n  "Message" : "{\\"s3Bucket\\":\\"bsides-trail-20200112083857693900000001\\",\\"s3ObjectKey\\":[\\"prefix/AWSLogs/ACCOUNT_ID/CloudTrail/us-west-2/2020/01/12/ACCOUNT_ID_CloudTrail_us-west-2_20200112T0930Z_XNcKI5JFGkzUeu0m.json.gz\\"]}",\n  "Timestamp" : "2020-01-12T09:34:12.116Z",\n  "SignatureVersion" : "1",\n  "Signature" : "Smtdm5Cai/ortbXR7wk1Vv4kwy3RlTelAH2UO4cLx1/tKukQEA/fqyLASZ7A3VkZlJVbSyDJ5n93hBHvY8+mXt5ip39r6O14D3iz7zh5SFUHXJgX8Csr1W9azJTfoiefbquH3bhyceLwQxrnw/FBi1LXkFgDNDsZj753QM0M192TQ1JTxNu2hoph5G++pIRXVVrg7pTYV8xxzJV4C/NvCK0vUnq3BnAnbSHVgWx7IIVlY3i9vmzI7wd7mpc2rDNiJPNHMdaUczCZU31u8WyGasA6EicyhvizUz6AxHfykNcNRPnz/QnBCk+8tnltAf7uF1LlI1ICrwIzbRkQ0gRHcg==",\n  "SigningCertURL" : "https://sns.us-west-2.amazonaws.com/SimpleNotificationService-a86cb10b4e1f29c941702d737128f7b6.pem",\n  "UnsubscribeURL" : "https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:ACCOUNT_ID:bsides-topic:c7d39b72-b232-4e5b-8bde-a8a0469c0413"\n}'}],
+#  'ResponseMetadata': {'RequestId': '7daac050-2003-543d-b2ea-96c4d2101de6',
+#   'HTTPStatusCode': 200,
+#   'HTTPHeaders': {'x-amzn-requestid': '7daac050-2003-543d-b2ea-96c4d2101de6',
+#    'date': 'Sun, 12 Jan 2020 10:07:15 GMT',
+#    'content-type': 'text/xml',
+#    'content-length': '2198'},
+#   'RetryAttempts': 0}}
+```
+
+Wow, that is pretty terrible. If we dig in a little bit, it looks like the message body is still raw JSON. Let's pull it out:
+
+```python
+message_body = json.loads(message['Messages'][0]['Body'])
+
+message_body['Message']
+print(message_body)
+
+# {'Type': 'Notification',
+#  'MessageId': 'd4ef62a2-b761-565f-ac03-34365d35d874',
+#  'TopicArn': 'arn:aws:sns:us-west-2:ACCOUNT_ID:bsides-topic',
+#  'Message': '{"s3Bucket":"bsides-trail-20200112083857693900000001","s3ObjectKey":["prefix/AWSLogs/ACCOUNT_ID/CloudTrail/us-west-2/2020/01/12/ACCOUNT_ID_CloudTrail_us-west-2_20200112T0930Z_XNcKI5JFGkzUeu0m.json.gz"]}',
+#  'Timestamp': '2020-01-12T09:34:12.116Z',
+#  'SignatureVersion': '1',
+#  'Signature': 'Smtdm5Cai/ortbXR7wk1Vv4kwy3RlTelAH2UO4cLx1/tKukQEA/fqyLASZ7A3VkZlJVbSyDJ5n93hBHvY8+mXt5ip39r6O14D3iz7zh5SFUHXJgX8Csr1W9azJTfoiefbquH3bhyceLwQxrnw/FBi1LXkFgDNDsZj753QM0M192TQ1JTxNu2hoph5G++pIRXVVrg7pTYV8xxzJV4C/NvCK0vUnq3BnAnbSHVgWx7IIVlY3i9vmzI7wd7mpc2rDNiJPNHMdaUczCZU31u8WyGasA6EicyhvizUz6AxHfykNcNRPnz/QnBCk+8tnltAf7uF1LlI1ICrwIzbRkQ0gRHcg==',
+#  'SigningCertURL': 'https://sns.us-west-2.amazonaws.com/SimpleNotificationService-a86cb10b4e1f29c941702d737128f7b6.pem',
+#  'UnsubscribeURL': 'https://sns.us-west-2.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-west-2:ACCOUNT_ID:bsides-topic:c7d39b72-b232-4e5b-8bde-a8a0469c0413'}
+```
+
+That's looking better, but the `Message` field seems to be more JSON buried inside that JSON! Let's parse it out:
+```python
+message_body_message = json.loads(message_body['Message'])
+
+# {'s3Bucket': 'bsides-trail-20200112083857693900000001',
+#  's3ObjectKey': ['prefix/AWSLogs/ACCOUNT_ID/CloudTrail/us-west-2/2020/01/12/ACCOUNT_ID_CloudTrail_us-west-2_20200112T0930Z_XNcKI5JFGkzUeu0m.json.gz']}
+```
+
+Now we've got something useful. SNS is essentially providing information about where files are being written to in our S3 bucket. Let's grab that file and see what's in it:
+
+```python
+s3 = boto3.client("s3")
+s3_bucket = message_body_message['s3Bucket']
+s3_object_key = message_body_message['s3ObjectKey'][0]
+s3.download_file(s3_bucket, s3_object_key, 'logs.json.gz')
+```
+
+This will download a file named `logs.json.gz` to our local directory. Unzip it with `gunzip logs.json.gz` and you can see the raw log events. These are the same as what will be ingested in Splunk.
+
+## Splunk Configuration
+To log in to your Splunk server, find the instance in the AWS EC2 Dashboard and find the Public IP or Public DNS entry for your server. Open a web browser and go to `http://YOUR_IP_OR_DNS:8000/`.
+
+Log in with username `admin` and password `SPLUNK-$INSTANCE_ID` (copy your instance ID from the EC2 dashboard).
+
+1) Install Splunk App for AWS
+
+* FIXME: Add instructions to create Splunk account and download file
+* FIXME: Update with step-by-step instructions / screenshots
+* FIXME: It'll probably be easiest to install with the `Install` button so we don't have to download then re-upload the file.
+
+Next we'll want to install the Splunk App for AWS (FIXME: Splunk Add-on for Amazon Web Services?) inside of Splunk so we can easily configure our CloudTrail ingestion.
+
+1) Hit ```install app from file``` while inside of Splunk and install the provided tar file.
+
+2) Enable self signed cert for the Splunk server so it can connect to the Amazon API.
+* FIXME: What does this mean?
+
+
 ## Searching and Alerting with Splunk
-FIXME
 1) Look at CloudTrail logs in Splunk
 
-2) Walk through creation of an alert that writes to SNS
+2) Walk through creation of an alert that writes to SQS
 
-## Python python python
-FIXME
+
+
 
 Start with small Python snippets that will be expanded
 
