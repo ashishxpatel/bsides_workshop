@@ -142,6 +142,7 @@ resource "aws_cloudtrail" "bsides" {
   s3_key_prefix                 = "prefix"
   include_global_service_events = true
   is_multi_region_trail = true
+  depends_on = [aws_s3_bucket_policy.cloudtrail_logs]
 }
 
 resource "aws_s3_bucket" "cloudtrail_logs" {
