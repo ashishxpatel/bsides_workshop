@@ -136,12 +136,13 @@ resource "aws_security_group" "automation_allow" {
 
 data "aws_caller_identity" "current" {}
 
-resource "aws_cloudtrail" "bsides" {
+resource "aws_cloudtrail" "bsides_trail" {
   name                          = "bsides-trail"
   s3_bucket_name                = "${aws_s3_bucket.cloudtrail_logs.id}"
   s3_key_prefix                 = "prefix"
   include_global_service_events = true
   is_multi_region_trail = true
+  sns_topic_name = aws_sns_topic.aws_cloudtrail_sns.name
   depends_on = [aws_s3_bucket_policy.cloudtrail_logs]
 }
 
@@ -280,3 +281,92 @@ resource "aws_iam_role" "iam_remediation_role" {
 }
 EOF
 }
+
+# Configure SNS and SQS for our automation and CloudTrail ingestion
+
+resource "aws_sns_topic_policy" "splunk-sns-topic-policy" {
+  arn = "${aws_sns_topic.aws_cloudtrail_sns.arn}"
+  policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Id": "__default_policy_ID",
+  "Statement": [
+    {
+      "Sid": "__default_statement_ID",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": [
+        "SNS:GetTopicAttributes",
+        "SNS:SetTopicAttributes",
+        "SNS:AddPermission",
+        "SNS:RemovePermission",
+        "SNS:DeleteTopic",
+        "SNS:Subscribe",
+        "SNS:ListSubscriptionsByTopic",
+        "SNS:Publish",
+        "SNS:Receive"
+      ],
+      "Resource": ${aws_sns_topic.aws_cloudtrail_sns.arn},
+      "Condition": {
+        "StringEquals": {
+          "AWS:SourceOwner": ${data.aws_caller_identity.current.account_id}
+        }
+      }
+    }
+    {
+      "Sid": "publish-from-s3",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": "SNS:Publish",
+      "Resource": ${aws_sns_topic.aws_cloudtrail_sns.arn},
+      "Condition": {
+        "ArnLike": {
+          "aws:SourceArn": ${aws_cloudtrail.bsides_trail.arn}
+        }
+      }
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_sns_topic" "aws_cloudtrail_sns" {
+  name = "aws_cloudtrail_sns"
+}
+
+resource "aws_sns_topic" "aws_lambda_sns" {
+  name = "aws_lambda_sns"
+}
+
+resource "aws_sqs_queue" "aws_splunk_queue_deadletter" {
+  name                      = "aws_splunk_queue_deadletter"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 900
+}
+
+resource "aws_sqs_queue" "aws_splunk_main_queue" {
+  name                      = "aws_splunk_main_queue"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 900
+  redrive_policy            = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.aws_splunk_queue_deadletter.arn
+    maxReceiveCount     = 4
+  })
+}
+
+resource "aws_sns_topic_subscription" "cloudtrail_updates_sqs_target" {
+  topic_arn = aws_sns_topic.aws_cloudtrail_sns.arn
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.aws_splunk_main_queue.arn
+}
+
