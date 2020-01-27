@@ -103,6 +103,7 @@ python3 -c "import jira; print(jira.__version__)"
 ```
 
 More information (AWS): https://docs.aws.amazon.com/cli/latest/userguide/install-macos.html#install-bundle-macos
+
 More information (virtualenvironment): https://docs.python.org/3/library/venv.html
 
 #### Subscribe Splunk Enterprise in AWS Marketplace
@@ -123,11 +124,11 @@ https://console.aws.amazon.com/iam
 #### Create Terraform user
 Navigate to `Access management` -> `Users` -> `Add user` and create a user named `terraform` with `Programmatic access`.
 
-!(/images/adduser1.jpg?raw=true "Add user")
+!(images/adduser1.jpg?raw=true "Add user")
 
 Attach the AdministratorAccess policy
 
-!(/images/adduser2.jpg?raw=true "Add user")
+!(images/adduser2.jpg?raw=true "Add user")
 
 Proceed through the "Add tags" page, review your configuration, and create the user. _Download or otherwise save the account credentials now, as they will not be available again._
 
@@ -348,27 +349,67 @@ In addition, we'll also attach the AWS managed policy ```AWSLambdaBasicExecution
 
 3) Now that our Lambda is in place, we can attach a security test security group called ```malicious_sg``` with permissions of port ```3389``` ingress open to the world. Note: whitelisted ports can be modified within the python code itself, there are many ways of going about this but this is one example :). We should now wait a few minutes and we'll notice that the bad SG has been removed from our automation server.
 
-## Jira jira jira
-FIXME
+## Working with the Jira API
+Working with Jira through the Python SDK is pretty straightforward. We should have already installed it above with `pip install jira`. Check the full SDK documentation at: https://jira.readthedocs.io/en/master/
+
+### Keep secrets separate
+Secrets management is hard. But for our simple usecase, we can put our secrets in a separate Python file and import it into our other files. This way we can keep all of our code in a git repo without exposing secrest.
+
+```python
+""" settings.py """
+jira_url = "$URL"
+jira_username = "$USERNAME"
+jira_password = "$PASSWORD"
+```
+
+### Creating an issue
+
+
 
 1) Configure Splunk alert for when the above lambda runs
 
 2) Walk through creating tickets from SNS (local or on EC2):
+
+
 ```python
-import boto3
 import jira
 
-def create_jira_issue(alert_name, alert_body):
-    j = jira.JIRA(
-        settings.jira_url,
-        basic_auth=(settings.username, settings.password),
-    )
-    j.create_issue(
-        project=settings.jira_project,
-        summary="SplunkAlert: {}".format(alert_name),
-        description=json.dumps(alert_body),
-        issuetype="Alert",
-    )
+j = jira.JIRA(
+    settings.jira_url,
+    basic_auth=(settings.jira_username, settings.jira_password),
+)
+```
+
+```
+In [14]: j.projects()
+Out[14]: [<JIRA Project: key='MOS', name='MosesProject1', id='10000'>]
+```
+
+```python
+issue = j.create_issue(
+    project=settings.jira_project,
+    summary="Hello, world!",
+    description="Insert description here",
+    issuetype="Task",
+)
+
+print(issue)
+print(issue.fields.summary)
+print(issue.fields.comment.comments)
+```
+
+```
+In [10]: i.fields.comment.comments
+Out[10]: []
+
+In [22]: j.add_comment("MOS-1", "Hello, comment!")
+Out[22]: <JIRA Comment: id='10000'>
+
+In [25]: i.update()
+
+In [26]: i.fields.comment.comments
+Out[26]: [<JIRA Comment: id='10000'>, <JIRA Comment: id='10001'>]
+```
 
 while 1:
     # FIXME: Consume from SNS queue
@@ -383,7 +424,7 @@ while 1:
 1) Take a look at the two pieces of code we have inside of this repo. ```aws_autofix_securitygroups.py``` and ```auto_disable_api.py```. In this example we'll be utilizing ```auto_disable_api.py``` which will shut down any access that is outside of operating region from an access key that was used. We'll be detecting this using IPlocation within Splunk and passing information to our Lambda via SNS to disable the access key in question.
 
 2) We'll need to start by heading to the Lambda console and creating a new Lambda in Python 3. A role should be created for this Lambda called ```IAMRemediationRole``` in the IAM console. We'll attach two different policies, one custom one for IAM actions:
-
++15055061890
 ```
 {
     "Version": "2012-10-17",
