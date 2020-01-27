@@ -124,11 +124,11 @@ https://console.aws.amazon.com/iam
 #### Create Terraform user
 Navigate to `Access management` -> `Users` -> `Add user` and create a user named `terraform` with `Programmatic access`.
 
-!(images/adduser1.jpg?raw=true "Add user")
+![Adduser](images/adduser1.jpg?raw=true "Add user")
 
 Attach the AdministratorAccess policy
 
-!(images/adduser2.jpg?raw=true "Add user")
+![Adduser](images/adduser2.jpg?raw=true "Add user")
 
 Proceed through the "Add tags" page, review your configuration, and create the user. _Download or otherwise save the account credentials now, as they will not be available again._
 
