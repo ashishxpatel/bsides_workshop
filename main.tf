@@ -288,48 +288,18 @@ resource "aws_sns_topic_policy" "splunk-sns-topic-policy" {
   arn = "${aws_sns_topic.aws_cloudtrail_sns.arn}"
   policy = <<EOF
 {
-  "Version": "2008-10-17",
-  "Id": "__default_policy_ID",
-  "Statement": [
-    {
-      "Sid": "__default_statement_ID",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "*"
-      },
-      "Action": [
-        "SNS:GetTopicAttributes",
-        "SNS:SetTopicAttributes",
-        "SNS:AddPermission",
-        "SNS:RemovePermission",
-        "SNS:DeleteTopic",
-        "SNS:Subscribe",
-        "SNS:ListSubscriptionsByTopic",
-        "SNS:Publish",
-        "SNS:Receive"
-      ],
-      "Resource": ${aws_sns_topic.aws_cloudtrail_sns.arn},
-      "Condition": {
-        "StringEquals": {
-          "AWS:SourceOwner": ${data.aws_caller_identity.current.account_id}
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AWSCloudTrailSNSPolicy20131101",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+            },
+            "Action": "SNS:Publish",
+            "Resource": "${aws_sns_topic.aws_cloudtrail_sns.arn}"
         }
-      }
-    }
-    {
-      "Sid": "publish-from-s3",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "s3.amazonaws.com"
-      },
-      "Action": "SNS:Publish",
-      "Resource": ${aws_sns_topic.aws_cloudtrail_sns.arn},
-      "Condition": {
-        "ArnLike": {
-          "aws:SourceArn": ${aws_cloudtrail.bsides_trail.arn}
-        }
-      }
-    }
-  ]
+    ]
 }
 EOF
 }
