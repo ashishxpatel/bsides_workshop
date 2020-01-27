@@ -334,6 +334,30 @@ resource "aws_sqs_queue" "aws_splunk_main_queue" {
   })
 }
 
+resource "aws_sqs_queue_policy" "aws_splunk_main_queue" {
+  queue_url = "${aws_sqs_queue.aws_splunk_main_queue.id}"
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "sqspolicy",
+  "Statement": [
+    {
+      "Sid": "First",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "sqs:SendMessage",
+      "Resource": "${aws_sqs_queue.aws_splunk_main_queue.arn}",
+      "Condition": {
+        "ArnEquals": {
+          "aws:SourceArn": "${aws_sns_topic.aws_cloudtrail_sns.arn}"
+        }
+      }
+    }
+  ]
+}
+POLICY
+}
+
 resource "aws_sns_topic_subscription" "cloudtrail_updates_sqs_target" {
   topic_arn = aws_sns_topic.aws_cloudtrail_sns.arn
   protocol  = "sqs"
