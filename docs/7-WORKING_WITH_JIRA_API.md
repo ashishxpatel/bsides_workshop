@@ -64,4 +64,3 @@ while 1:
     # FIXME: Consume from SNS queue
     if SNS_event:
       create_jira_issue("fixme", "fixme")
-```

@@ -42,7 +42,7 @@ More information (AWS): https://docs.aws.amazon.com/cli/latest/userguide/install
 
 More information (virtualenvironment): https://docs.python.org/3/library/venv.html
 
-#### Subscribe Splunk Enterprise in AWS Marketplace
+#### Subscribe to Splunk Enterprise in AWS Marketplace
 We will be using the Splunk Enterprise AMI from the AWS Marketplace, which requires subscribing before we can use it. Visit https://aws.amazon.com/marketplace/pp?sku=7azvchdfh74dcxoiwjhztgpel, click `Continue to Subscribe`, and accept the terms.
 
 This does _not_ cost anything and does not provide a Splunk license, it only allows us to use the AMI (which does come with a baked-in trial license that we will be using).
