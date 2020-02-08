@@ -136,12 +136,13 @@ resource "aws_security_group" "automation_allow" {
 
 data "aws_caller_identity" "current" {}
 
-resource "aws_cloudtrail" "bsides" {
+resource "aws_cloudtrail" "bsides_trail" {
   name                          = "bsides-trail"
   s3_bucket_name                = "${aws_s3_bucket.cloudtrail_logs.id}"
   s3_key_prefix                 = "prefix"
   include_global_service_events = true
   is_multi_region_trail = true
+  sns_topic_name = aws_sns_topic.aws_cloudtrail_sns.name
   depends_on = [aws_s3_bucket_policy.cloudtrail_logs]
 }
 
@@ -183,3 +184,183 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
 }
 POLICY
 }
+
+# Create our Lambda policies (one for EC2 remediation, and one for IAM remediation)
+
+resource "aws_iam_role_policy" "ec2_remediation_policy" {
+  name = "ec2_remediation_policy"
+  role = "${aws_iam_role.ec2_remediation_role.id}"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeSecurityGroupReferences",
+                "ec2:DescribeRegions",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeStaleSecurityGroups",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "sns:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role" "ec2_remediation_role" {
+  name = "ec2_remediation_role"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "iam_remediation_policy" {
+  name = "iam_remediation_policy"
+  role = "${aws_iam_role.iam_remediation_role.id}"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:UpdateAccessKey",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "sns:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role" "iam_remediation_role" {
+  name = "iam_remediation_role"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+# Configure SNS and SQS for our automation and CloudTrail ingestion
+
+resource "aws_sns_topic_policy" "splunk-sns-topic-policy" {
+  arn = "${aws_sns_topic.aws_cloudtrail_sns.arn}"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AWSCloudTrailSNSPolicy20131101",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+            },
+            "Action": "SNS:Publish",
+            "Resource": "${aws_sns_topic.aws_cloudtrail_sns.arn}"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_sns_topic" "aws_cloudtrail_sns" {
+  name = "aws_cloudtrail_sns"
+}
+
+resource "aws_sns_topic" "aws_lambda_sns" {
+  name = "aws_lambda_sns"
+}
+
+resource "aws_sqs_queue" "aws_splunk_queue_deadletter" {
+  name                      = "aws_splunk_queue_deadletter"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 900
+}
+
+resource "aws_sqs_queue" "aws_splunk_main_queue" {
+  name                      = "aws_splunk_main_queue"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 900
+  redrive_policy            = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.aws_splunk_queue_deadletter.arn
+    maxReceiveCount     = 4
+  })
+}
+
+resource "aws_sqs_queue_policy" "aws_splunk_main_queue" {
+  queue_url = "${aws_sqs_queue.aws_splunk_main_queue.id}"
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "sqspolicy",
+  "Statement": [
+    {
+      "Sid": "First",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "sqs:SendMessage",
+      "Resource": "${aws_sqs_queue.aws_splunk_main_queue.arn}",
+      "Condition": {
+        "ArnEquals": {
+          "aws:SourceArn": "${aws_sns_topic.aws_cloudtrail_sns.arn}"
+        }
+      }
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_sns_topic_subscription" "cloudtrail_updates_sqs_target" {
+  topic_arn = aws_sns_topic.aws_cloudtrail_sns.arn
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.aws_splunk_main_queue.arn
+}
+
