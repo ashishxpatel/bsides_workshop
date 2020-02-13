@@ -3,7 +3,7 @@ resource "aws_instance" "splunk-server" {
   ami           = "ami-047942f791d04b69f"
   instance_type = "t2.small"
   security_groups = ["${aws_security_group.splunk_allow.name}"]
-  iam_instance_profile = "${aws_iam_instance_profile.splunk_profile.name}"
+  iam_instance_profile = aws_iam_instance_profile.splunk_profile.name
   tags = {
     Name = "splunk-server"
   }
@@ -75,7 +75,7 @@ EOF
 
 resource "aws_iam_role_policy" "splunk_policy" {
   name = "splunk_policy"
-  role = "${aws_iam_role.splunk_role.id}"
+  role = aws_iam_role.splunk_role.id
 
   policy = <<EOF
 {
@@ -98,7 +98,7 @@ EOF
 
 resource "aws_iam_instance_profile" "splunk_profile" {
   name = "splunk_profile"
-  role = "${aws_iam_role.splunk_role.name}"
+  role = aws_iam_role.splunk_role.name
 }
 
 
@@ -138,7 +138,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_cloudtrail" "bsides_trail" {
   name                          = "bsides-trail"
-  s3_bucket_name                = "${aws_s3_bucket.cloudtrail_logs.id}"
+  s3_bucket_name                = aws_s3_bucket.cloudtrail_logs.id
   s3_key_prefix                 = "prefix"
   include_global_service_events = true
   is_multi_region_trail = true
@@ -189,7 +189,7 @@ POLICY
 
 resource "aws_iam_role_policy" "ec2_remediation_policy" {
   name = "ec2_remediation_policy"
-  role = "${aws_iam_role.ec2_remediation_role.id}"
+  role = aws_iam_role.ec2_remediation_role.id
 
   policy = <<EOF
 {
@@ -239,7 +239,7 @@ EOF
 
 resource "aws_iam_role_policy" "iam_remediation_policy" {
   name = "iam_remediation_policy"
-  role = "${aws_iam_role.iam_remediation_role.id}"
+  role = aws_iam_role.iam_remediation_role.id
 
   policy = <<EOF
 {
@@ -285,7 +285,7 @@ EOF
 # Configure SNS and SQS for our automation and CloudTrail ingestion
 
 resource "aws_sns_topic_policy" "splunk-sns-topic-policy" {
-  arn = "${aws_sns_topic.aws_cloudtrail_sns.arn}"
+  arn = aws_sns_topic.aws_cloudtrail_sns.arn
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -335,7 +335,7 @@ resource "aws_sqs_queue" "aws_splunk_main_queue" {
 }
 
 resource "aws_sqs_queue_policy" "aws_splunk_main_queue" {
-  queue_url = "${aws_sqs_queue.aws_splunk_main_queue.id}"
+  queue_url = aws_sqs_queue.aws_splunk_main_queue.id
   policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -364,3 +364,71 @@ resource "aws_sns_topic_subscription" "cloudtrail_updates_sqs_target" {
   endpoint  = aws_sqs_queue.aws_splunk_main_queue.arn
 }
 
+## Create the terraform lamdbas (1 for IAM remediation, 2 for EC2 remediation)
+
+data "archive_file" "auto_disable_api_lambda_zip" {
+    type        = "zip"
+    source_file  = "auto_disable_api.py"
+    output_path = "auto_disable_api.zip"
+}
+
+resource "aws_lambda_function" "auto_disable_api_lambda" {
+  filename = "auto_disable_api.zip"
+  source_code_hash = data.archive_file.auto_disable_api_lambda_zip.output_base64sha256
+  function_name = "auto_disable_api"
+  role = aws_iam_role.iam_remediation_role.arn
+  description = "IAM remediation lambda"
+  handler = "auto_disable_api.handler"
+  runtime = "python3.6"
+  timeout = 90
+}
+
+resource "aws_lambda_permission" "with_sns" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.auto_disable_api_lambda.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.aws_lambda_sns.arn
+}
+
+resource "aws_sns_topic_subscription" "sns_trigger_lambda" {
+  topic_arn = aws_sns_topic.aws_lambda_sns.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.auto_disable_api_lambda.arn
+}
+
+data "archive_file" "autofix_securitygroups_lambda_zip" {
+    type        = "zip"
+    source_file  = "autofix_securitygroups.py"
+    output_path = "autofix_securitygroups.zip"
+}
+
+resource "aws_lambda_function" "autofix_securitygroups_lambda" {
+  filename = "autofix_securitygroups.zip"
+  source_code_hash = data.archive_file.autofix_securitygroups_lambda_zip.output_base64sha256
+  function_name = "autofix_securitygroups"
+  role = aws_iam_role.ec2_remediation_role.arn
+  description = "EC2 remediation lambda"
+  handler = "autofix_securitygroups.handler"
+  runtime = "python3.6"
+  timeout = 90
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.autofix_securitygroups_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.every2minutes.arn
+}
+
+resource "aws_cloudwatch_event_rule" "every2minutes" {
+  name        = "trigger-every-two-minutes"
+  description = "Trigger every 2 minutes"
+  schedule_expression = "rate(2 minutes)"
+}
+
+resource "aws_cloudwatch_event_target" "ec2triggertarget" {
+  rule      = aws_cloudwatch_event_rule.every2minutes.name
+  arn       = aws_lambda_function.autofix_securitygroups_lambda.arn
+}
