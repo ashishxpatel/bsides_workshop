@@ -366,19 +366,19 @@ resource "aws_sns_topic_subscription" "cloudtrail_updates_sqs_target" {
 
 ## Create the terraform lamdbas (1 for IAM remediation, 2 for EC2 remediation)
 
-data "archive_file" "auto_disable_api_lambda_zip" {
+data "archive_file" "automation_lambda_zip" {
     type        = "zip"
-    source_file  = "auto_disable_api.py"
-    output_path = "auto_disable_api.zip"
+    source_dir  = "automation_lambda/"
+    output_path = "automation_lambda.zip"
 }
 
-resource "aws_lambda_function" "auto_disable_api_lambda" {
-  filename = "auto_disable_api.zip"
-  source_code_hash = data.archive_file.auto_disable_api_lambda_zip.output_base64sha256
-  function_name = "auto_disable_api"
+resource "aws_lambda_function" "automation_lambda" {
+  filename = "automation_lambda.zip"
+  source_code_hash = data.archive_file.automation_lambda_zip.output_base64sha256
+  function_name = "automation_lambda"
   role = aws_iam_role.iam_remediation_role.arn
   description = "IAM remediation lambda"
-  handler = "auto_disable_api.handler"
+  handler = "automation_lambda.lambda_handler"
   runtime = "python3.6"
   timeout = 90
 }
@@ -386,7 +386,7 @@ resource "aws_lambda_function" "auto_disable_api_lambda" {
 resource "aws_lambda_permission" "with_sns" {
   statement_id  = "AllowExecutionFromSNS"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.auto_disable_api_lambda.function_name
+  function_name = aws_lambda_function.automation_lambda.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.aws_lambda_sns.arn
 }
@@ -394,7 +394,7 @@ resource "aws_lambda_permission" "with_sns" {
 resource "aws_sns_topic_subscription" "sns_trigger_lambda" {
   topic_arn = aws_sns_topic.aws_lambda_sns.arn
   protocol  = "lambda"
-  endpoint  = aws_lambda_function.auto_disable_api_lambda.arn
+  endpoint  = aws_lambda_function.automation_lambda.arn
 }
 
 data "archive_file" "autofix_securitygroups_lambda_zip" {

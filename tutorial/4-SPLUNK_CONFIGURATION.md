@@ -1,5 +1,6 @@
 # Splunk Configuration
-To log in to your Splunk server, find the instance in the AWS EC2 Dashboard and find the Public IP or Public DNS entry for your server. Open a web browser and go to `http://YOUR_IP_OR_DNS:8000/`.
+To log in to your Splunk server, find the instance in the AWS EC2 Dashboard and find the Public IP or Public DNS entry for your server. Open a web browser and go to `http://YOUR_IP_OR_DNS:8000/`. If
+you just built your infrastructure with Terraform you may have to wait a few minutes while Splunk may starts up.
 
 Log in with username `admin` and password `SPLUNK-$INSTANCE_ID` (copy your instance ID from the EC2 dashboard).
 
@@ -10,12 +11,12 @@ Next we'll want to install the Splunk Add-on for Amazon Web Services and configu
  - From main Splunk landing page, `+ Find More Apps`
  - Search for AWS, find the Splunk Add-on for Amazon Web Services
  - Click "Install" and supply Splunk credentials
- - Optional: Servert settings -> General settings -> enable HTTPS
+ - Optional: Server settings -> General settings -> enable HTTPS
  - Settings -> Server controls -> Restart Splunk
 
  - After restarting (or before, whatever):
  - Go to Splunk Add-on for Amazon Web Services -> Inputs
- - Create SQS-Based S3 input
+ - Create New Input -> CloudTrail -> SQS-Based S3
     - Name: aws_cloudtrail
     - AWS account: splunk_role (IAM supplied by infrastructure config)
     - Assume role: leave empty (optional)
@@ -23,15 +24,15 @@ Next we'll want to install the Splunk Add-on for Amazon Web Services and configu
     - SQS Queue Name: aws_splunk_main_queue
     - SQS Batch Size: 10 (default)
     - Leave others at default
-    - Click Update
+    - Click Submit
 
 * FIXME: Update with screenshots
-* FIXME Maybe: Automate this setup?
 
 ## Searching and Alerting with Splunk
 1) Look at CloudTrail logs in Splunk
 
 - Go back to Search & Reporting App, search `index=main sourcetype=aws:cloudtrail`
+
 - See Cloudtrail logs!!
 
 2) Walk through creation of an alert that writes to SQS

@@ -32,7 +32,7 @@ python3 -m venv venv
 source venv/bin/activate
 curl -O https://bootstrap.pypa.io/get-pip.py
 python3 get-pip.py
-pip3 install awscli boto3 jira
+pip3 install awscli boto3 jira jupyterlab
 aws --version
 python3 -c "import boto3; print(boto3.__version__)"
 python3 -c "import jira; print(jira.__version__)"
