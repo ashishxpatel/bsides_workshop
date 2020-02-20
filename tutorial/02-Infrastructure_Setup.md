@@ -107,4 +107,10 @@ When we're done with this infrastructure, we will take it all down with:
 terraform destroy
 ```
 
+#### Start Jupyter Notebook
+Several of the sections in this tutorial are implemented in Jupyter Notebooks. GitHub will render these in your browser, but interacting with them locally (which is strongly suggested) will require starting the Jupyter Notebook server in a terminal:
 
+```
+source venv/bin/activate
+jupyter notebook
+```
