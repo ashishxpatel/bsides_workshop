@@ -54,6 +54,37 @@ resource "aws_security_group" "splunk_allow" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+resource "aws_instance" "automation-server" {
+  ami           = "ami-06d51e91cea0dac8d"
+  instance_type = "t2.small"
+  security_groups = ["${aws_security_group.automation_allow.name}"]
+  tags = {
+    Name = "automation-server"
+  }
+}
+resource "aws_security_group" "automation_allow" {
+  name = "allow_automation_ports_ingress"
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_iam_role" "splunk_role" {
   name = "splunk_role"
 
