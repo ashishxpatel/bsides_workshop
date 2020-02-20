@@ -8,14 +8,14 @@ We won't be using toy examples: we'll be using the security tools we have used i
 
 [Infrastructure Setup with Terraform](tutorial/02-Infrastructure_Setup.md)
 
-[Exploring Infrastructure Internals via AWS API](tutorial/2.5-Digging_Into_SQS_SNS_S3_logs.ipynb )
+[Setting up Splunk](tutorial/03-Splunk_Setup.md)
 
-[Setting up Splunk](tutorial/4-SPLUNK_CONFIGURATION.md)
+[Working with the Jira API](tutorial/04-Working_with_Jira_SDK.ipynb)
 
-[Searching and Alerting with Splunk](tutorial/5-SPLUNK_SEARCHING_AND_ALERTING.md)
+[Building Lambda Functions](tutorial/05-AWS_Lambda.md)
 
-[Remediating Open Security Groups with the AWS API](tutorial/6-Remediating_Open_Security_Groups_AWS_API.ipynb)
+[Searching and Alerting with Splunk](tutorial/06-Splunk_Searching_and_Alerting.md)
 
-[Integrating with the Jira API](tutorial/7-Working_with_JIRAA_SDK.ipynb)
+[Remediating Open Security Groups with the AWS API](tutorial/07-Remediating_Open_Security_Groups_AWS_API.ipynb)
 
-[Deploying Lambda Functions](tutorial/8-ANOTHER_LAMBDA_WORKFLOW.md)
+[Disabling API Keys on Suspicious Access](tutorial/08-Disable_Key_on_Suspicious_Access.md)
