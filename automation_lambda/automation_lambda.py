@@ -16,6 +16,8 @@ def lambda_handler(event, context):
         summary = f"Splunk Alert: {search_name}"
         print(f"Creating ticket for {summary}")
         create_ticket(summary, json.dumps(alert_data))
+    elif action == "remediate_security_groups":
+        remediate_open_security_groups()
 
 
 def create_ticket(summary, description):
@@ -30,6 +32,7 @@ def create_ticket(summary, description):
         description=description,
         issuetype="Task",
     )
+    return issue
 
 
 def open_security_groups():
@@ -92,6 +95,7 @@ def remediate_open_security_groups():
         for group in instance_open_groups:
             ticket_description += f"Removing {group} from {instance}\n"
             remove_security_group(instance, group)
-    create_ticket("Remediated security groups", ticket_description)
-
-
+    if not ticket_description:
+        print("No open security groups - No action taken")
+    issue = create_ticket("Remediated security groups", ticket_description)
+    print(f"Created {issue.key}: {ticket_description}")
