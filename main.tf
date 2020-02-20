@@ -1,7 +1,8 @@
 # Create our server infrastructure needed
+
 resource "aws_instance" "splunk-server" {
   ami           = "ami-047942f791d04b69f"
-  instance_type = "t2.small"
+  instance_type = "t2.medium"
   security_groups = ["${aws_security_group.splunk_allow.name}"]
   iam_instance_profile = aws_iam_instance_profile.splunk_profile.name
   tags = {
@@ -53,6 +54,37 @@ resource "aws_security_group" "splunk_allow" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+resource "aws_instance" "automation-server" {
+  ami           = "ami-06d51e91cea0dac8d"
+  instance_type = "t2.small"
+  security_groups = ["${aws_security_group.automation_allow.name}"]
+  tags = {
+    Name = "automation-server"
+  }
+}
+resource "aws_security_group" "automation_allow" {
+  name = "allow_automation_ports_ingress"
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_iam_role" "splunk_role" {
   name = "splunk_role"
 
@@ -99,37 +131,6 @@ EOF
 resource "aws_iam_instance_profile" "splunk_profile" {
   name = "splunk_profile"
   role = aws_iam_role.splunk_role.name
-}
-
-
-resource "aws_instance" "automation-server" {
-  ami           = "ami-06d51e91cea0dac8d"
-  instance_type = "t2.small"
-  security_groups = ["${aws_security_group.automation_allow.name}"]
-  tags = {
-    Name = "automation-server"
-  }
-}
-resource "aws_security_group" "automation_allow" {
-  name = "allow_automation_ports_ingress"
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }
 
 # Configure our CloudTrail
@@ -377,7 +378,7 @@ resource "aws_lambda_function" "automation_lambda" {
   source_code_hash = data.archive_file.automation_lambda_zip.output_base64sha256
   function_name = "automation_lambda"
   role = aws_iam_role.iam_remediation_role.arn
-  description = "IAM remediation lambda"
+  description = "automation lambda"
   handler = "automation_lambda.lambda_handler"
   runtime = "python3.6"
   timeout = 90
@@ -397,38 +398,3 @@ resource "aws_sns_topic_subscription" "sns_trigger_lambda" {
   endpoint  = aws_lambda_function.automation_lambda.arn
 }
 
-data "archive_file" "autofix_securitygroups_lambda_zip" {
-    type        = "zip"
-    source_file  = "autofix_securitygroups.py"
-    output_path = "autofix_securitygroups.zip"
-}
-
-resource "aws_lambda_function" "autofix_securitygroups_lambda" {
-  filename = "autofix_securitygroups.zip"
-  source_code_hash = data.archive_file.autofix_securitygroups_lambda_zip.output_base64sha256
-  function_name = "autofix_securitygroups"
-  role = aws_iam_role.ec2_remediation_role.arn
-  description = "EC2 remediation lambda"
-  handler = "autofix_securitygroups.handler"
-  runtime = "python3.6"
-  timeout = 90
-}
-
-resource "aws_lambda_permission" "allow_cloudwatch" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.autofix_securitygroups_lambda.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.every2minutes.arn
-}
-
-resource "aws_cloudwatch_event_rule" "every2minutes" {
-  name        = "trigger-every-two-minutes"
-  description = "Trigger every 2 minutes"
-  schedule_expression = "rate(2 minutes)"
-}
-
-resource "aws_cloudwatch_event_target" "ec2triggertarget" {
-  rule      = aws_cloudwatch_event_rule.every2minutes.name
-  arn       = aws_lambda_function.autofix_securitygroups_lambda.arn
-}
