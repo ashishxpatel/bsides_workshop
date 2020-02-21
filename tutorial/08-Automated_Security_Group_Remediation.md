@@ -16,3 +16,6 @@ Create an open security group for testing. Note that our example code has a hard
 ![security_group_remediation1.png](images/security_group_remediation1.png?raw=true "security_group_remediation1.png")
 
 ![security_group_remediation2.png](images/security_group_remediation2.png?raw=true "security_group_remediation2.png")
+
+#### Automate all the things!
+If everything worked right, the open security group will have been removed and you'll have a new ticket documenting that action.

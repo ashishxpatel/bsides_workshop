@@ -47,3 +47,8 @@ pkgtmp/
 .vagrant/
 .vscode/
 scratch/
+
+automation_lambda/**/
+automation_lambda/_cffi_backend.cpython-37m-darwin.so
+automation_lambda/easy_install.py
+automation_lambda/six.py
