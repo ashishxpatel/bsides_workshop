@@ -9,8 +9,6 @@ The approach to building automation you will learn in this workshop is applicabl
 # Requirements
 Students should be comfortable with basic Python scripting (at a minimum, able to write functions, loops, and conditionals without consulting documentation) and should be familiar with security terminology. The student who stands to gain the most from this course is one with professional experience in security and an interest in developing new skills in applying programming to automate their work.
 
-# Text Dump From Initial Submission, to be moved around
-
 ## Introduction to public cloud security risks and common security scenarios (Workshop Presentation)
 * We will discuss the numerous security events occurring in the public cloud space particularly in AWS where security engineers have to be vigilant
   * Specific examples: public S3 buckets & open security groups
