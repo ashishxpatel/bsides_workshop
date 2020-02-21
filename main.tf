@@ -186,57 +186,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
 POLICY
 }
 
-# Create our Lambda policies (one for EC2 remediation, and one for IAM remediation)
-
-resource "aws_iam_role_policy" "ec2_remediation_policy" {
-  name = "ec2_remediation_policy"
-  role = aws_iam_role.ec2_remediation_role.id
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "VisualEditor0",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeInstances",
-                "ec2:DescribeSecurityGroupReferences",
-                "ec2:DescribeRegions",
-                "ec2:ModifyInstanceAttribute",
-                "ec2:DescribeSecurityGroups",
-                "ec2:DescribeStaleSecurityGroups",
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "sns:*"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
-}
-
-resource "aws_iam_role" "ec2_remediation_role" {
-  name = "ec2_remediation_role"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-}
+# Create our Lambda policies (one for EC2 remediation)
 
 resource "aws_iam_role_policy" "iam_remediation_policy" {
   name = "iam_remediation_policy"
@@ -254,6 +204,12 @@ resource "aws_iam_role_policy" "iam_remediation_policy" {
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
                 "logs:PutLogEvents",
+                "ec2:DescribeInstances",
+                "ec2:DescribeSecurityGroupReferences",
+                "ec2:DescribeRegions",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeStaleSecurityGroups",
                 "sns:*"
             ],
             "Resource": "*"
