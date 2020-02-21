@@ -11,7 +11,7 @@ Next we'll want to install the Splunk Add-on for Amazon Web Services and configu
  - From main Splunk landing page, `+ Find More Apps`
  - Search for AWS, find the Splunk Add-on for Amazon Web Services
  - Click "Install" and supply Splunk credentials
- - Optional: Server settings -> General settings -> enable HTTPS
+ - Server settings -> General settings -> enable HTTPS
  - Settings -> Server controls -> Restart Splunk
 
  - After restarting:
