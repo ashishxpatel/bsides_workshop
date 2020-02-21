@@ -17,6 +17,9 @@ Next we'll want to install the Splunk Add-on for Amazon Web Services and configu
  - After restarting:
  - Go to Splunk Add-on for Amazon Web Services -> Inputs
  - Create New Input -> CloudTrail -> SQS-Based S3
+![NewInput](images/cloudtrail_input_setup.png?raw=true "NewInput")
+
+ - Configure with:
     - Name: aws_cloudtrail
     - AWS account: splunk_role (IAM supplied by infrastructure config)
     - Assume role: leave empty (optional)
@@ -26,14 +29,12 @@ Next we'll want to install the Splunk Add-on for Amazon Web Services and configu
     - Leave others at default
     - Click Submit
 
-* FIXME: Update with screenshots
+![CloudTrailConf](images/cloudtrail_configuration.png?raw=true "CloudTrailConf")
 
 #### Verify that CloudTrail Logs are Ingested
 To look at the CloudTrail logs and verify that everything is working correctly, go to the Search & Reporting App and search for
 ```
 index=main sourcetype=aws:cloudtrail
 ```
-
-FIXME: screenshot here
 
 Note: It may take around 15 minutes for logs to start appearing in Splunk.
