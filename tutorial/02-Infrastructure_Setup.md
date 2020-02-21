@@ -43,14 +43,12 @@ More information (AWS): https://docs.aws.amazon.com/cli/latest/userguide/install
 More information (virtualenvironment): https://docs.python.org/3/library/venv.html
 
 #### Subscribe to Splunk Enterprise in AWS Marketplace
-We will be using the Splunk Enterprise AMI from the AWS Marketplace, which requires subscribing before we can use it. Visit https://aws.amazon.com/marketplace/pp?sku=7azvchdfh74dcxoiwjhztgpel, click `Continue to Subscribe`, and accept the terms.
+We will be using the Splunk Enterprise AMI from the AWS Marketplace, which requires subscribing before we can use it. Visit https://aws.amazon.com/marketplace/pp?sku=7azvchdfh74dcxoiwjhztgpel, click `Continue to Subscribe`, and accept the terms. Don't follow the next prompts to deploy an instance -- we'll do that ourselves later.
 
 This does _not_ cost anything and does not provide a Splunk license, it only allows us to use the AMI (which does come with a baked-in trial license that we will be using).
 
 #### Other options and platforms
 You can install AWS CLI, Terraform, and pip with your package manager of choice (brew, yum, apt-get, etc.). Using a Python virtualenvironment is not strictly required, but we do strongly suggest that you use a venv and install dependencies in it with pip.
-
-FIXME: Once details are ironed out, we can go through these steps and take screenshots
 
 ## Infrastructure with Terraform (Splunk Server, Automation Server, CloudTrail)
 

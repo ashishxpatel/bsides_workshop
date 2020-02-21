@@ -1,7 +1,7 @@
+# Disabling API Keys
 
-3) Put ^^^ into a Lambda
+This section needs more development. For now, we are leaving it as an exercise for the reader.
 
-## Lambda configuration 2 (Insert Unicorn Emoji Here :D )
 
 1) Take a look at the two pieces of code we have inside of this repo. ```aws_autofix_securitygroups.py``` and ```auto_disable_api.py```. In this example we'll be utilizing ```auto_disable_api.py``` which will shut down any access that is outside of operating region from an access key that was used. We'll be detecting this using IPlocation within Splunk and passing information to our Lambda via SNS to disable the access key in question.
 
