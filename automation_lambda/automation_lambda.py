@@ -43,12 +43,16 @@ def open_security_groups():
             {"Name": "ip-permission.cidr", "Values": ["0.0.0.0/0"]},
         ]
     )
-    groups_whitelist = ["sg-085e22931921563de"]
-    ports_whitelist = [22, 80, 443, 8080]
+    groups_whitelist = ["allow_splunk_ports_ingress"]
+    ports_whitelist = [22, 80, 443, 8080, 8000]
+    test_failsafe = "despicable"
     open_groups = []
     for sg in security_groups["SecurityGroups"]:
         for permission in sg["IpPermissions"]:
-            if sg["GroupId"] not in groups_whitelist and permission["ToPort"] not in ports_whitelist:
+            if sg["GroupName"] not in groups_whitelist and permission["ToPort"] not in ports_whitelist:
+                if test_failsafe not in sg["GroupName"]:
+                    # Make sure we only match a group with "despicable" in its name, just in case...
+                    continue
                 open_groups.append(sg["GroupId"])
     return list(set(open_groups))
 
@@ -77,12 +81,20 @@ def instance_security_groups():
 
 
 def remove_security_group(instance_id, sg_id):
+    ec2 = boto3.client('ec2')
+    group_name = 'default'
+    response = ec2.describe_security_groups(
+        Filters=[
+            dict(Name='group-name', Values=[group_name])
+        ]
+    )
+    default_group_id = response['SecurityGroups'][0]['GroupId']
     ec2_resource = boto3.resource("ec2")
     instance = ec2_resource.Instance(instance_id)
     new_groups = [g["GroupId"] for g in instance.security_groups if g["GroupId"] != sg_id]
     # Security groups can't be empty, so if this list is empty use the default security group
     if not new_groups:
-        new_groups = ["default"]
+        new_groups = [default_group_id]
     instance.modify_attribute(Groups=new_groups)
 
 
@@ -97,5 +109,6 @@ def remediate_open_security_groups():
             remove_security_group(instance, group)
     if not ticket_description:
         print("No open security groups - No action taken")
+        return
     issue = create_ticket("Remediated security groups", ticket_description)
     print(f"Created {issue.key}: {ticket_description}")
