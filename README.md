@@ -18,4 +18,6 @@ We won't be using toy examples: we'll be using the security tools we have used i
 
 [Remediating Open Security Groups with the AWS API](tutorial/07-Remediating_Open_Security_Groups_AWS_API.ipynb)
 
-[Disabling API Keys on Suspicious Access](tutorial/08-Disable_Key_on_Suspicious_Access.md)
+[Automated Security Group Remediation](tutorial/08-Automated_Security_Group_Remediation.md)
+
+[Disabling API Keys on Suspicious Access](tutorial/09-Disable_Key_on_Suspicious_Access.md)
