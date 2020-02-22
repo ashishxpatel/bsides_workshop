@@ -13,8 +13,12 @@ Create an open security group for testing. Note that our example code has a hard
 ![security_group_assignment_2.png](images/security_group_assignment_2.png?raw=true "security_group_assignment_2.png")
 
 #### Set up a new alert
-You can set up a new alert with the following query and configuration.
-```index=main sourcetype=aws:cloudtrail eventName=*SecurityGroup* NOT eventName=DescribeSecurityGroups```
+Set up a new Splunk alert using the same query we used for the security group change alert:
+
+```
+index=main sourcetype=aws:cloudtrail eventName=*SecurityGroup* NOT eventName=DescribeSecurityGroups
+```
+
 ![security_group_remediation1.png](images/security_group_remediation1.png?raw=true "security_group_remediation1.png")
 
 ![security_group_remediation2.png](images/security_group_remediation2.png?raw=true "security_group_remediation2.png")
