@@ -53,7 +53,7 @@ Finally, we can just copy-and-paste the code we developed in the last section in
 
 #### Shortcut option!
 If you don't have time to write your own function and just want to see the end result, we have a fully-implemented solution in `automation_lambda_solution.py`:
-```mv tutorial/automation_lambda_solution.py tutorial/automation_lambda.py```
+```mv automation_lambda/automation_lambda_solution.py automation_lambda/automation_lambda.py```
 
 #### Apply and test
 Push our latest code to AWS with Terraform:
