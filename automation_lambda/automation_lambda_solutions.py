@@ -77,12 +77,20 @@ def instance_security_groups():
 
 
 def remove_security_group(instance_id, sg_id):
+    ec2 = boto3.client('ec2')
+    group_name = 'default'
+    response = ec2.describe_security_groups(
+        Filters=[
+            dict(Name='group-name', Values=[group_name])
+        ]
+    )
+    default_group_id = response['SecurityGroups'][0]['GroupId']
     ec2_resource = boto3.resource("ec2")
     instance = ec2_resource.Instance(instance_id)
     new_groups = [g["GroupId"] for g in instance.security_groups if g["GroupId"] != sg_id]
     # Security groups can't be empty, so if this list is empty use the default security group
     if not new_groups:
-        new_groups = ["default"]
+        new_groups = [default_group_id]
     instance.modify_attribute(Groups=new_groups)
 
 
