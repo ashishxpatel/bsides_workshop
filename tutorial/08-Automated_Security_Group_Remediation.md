@@ -19,5 +19,6 @@ You can set up a new alert with the following query and configuration.
 
 ![security_group_remediation2.png](images/security_group_remediation2.png?raw=true "security_group_remediation2.png")
 
+The event message field should contain ```remediate_security_groups```
 #### Automate all the things!
 If everything worked right, the open security group will have been removed and you'll have a new ticket documenting that action.
