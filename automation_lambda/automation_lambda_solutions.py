@@ -43,14 +43,20 @@ def open_security_groups():
             {"Name": "ip-permission.cidr", "Values": ["0.0.0.0/0"]},
         ]
     )
-    groups_whitelist = ["sg-085e22931921563de"]
-    ports_whitelist = [22, 80, 443, 8080]
+    groups_whitelist = ["allow_splunk_ports_ingress"]
+    ports_whitelist = [22, 80, 443, 8080, 8000]
+    test_failsafe = "despicable"
     open_groups = []
     for sg in security_groups["SecurityGroups"]:
         for permission in sg["IpPermissions"]:
-            if sg["GroupId"] not in groups_whitelist and permission["ToPort"] not in ports_whitelist:
+            if sg["GroupName"] not in groups_whitelist and permission["ToPort"] not in ports_whitelist:
+                if test_failsafe not in sg["GroupName"]:
+                    # Make sure we only match a group with "despicable" in its name, just in case...
+                    continue
                 open_groups.append(sg["GroupId"])
     return list(set(open_groups))
+
+open_security_groups()
 
 
 def instance_security_groups():
