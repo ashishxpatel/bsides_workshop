@@ -17,7 +17,7 @@ def lambda_handler(event, context):
         print(f"Creating ticket for {summary}")
         create_ticket(summary, json.dumps(alert_data))
     elif action == "remediate_security_groups":
-        remediation_summary = remediate_open_security_groups()
+        remediation_summary = "\n".join(remediate_open_security_groups())
         if remediation_summary != "":
             print(f"Creating ticket for {remediation_summary}")
             create_ticket("Remediated security groups", remediation_summary)
