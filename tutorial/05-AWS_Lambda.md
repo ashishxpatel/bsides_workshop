@@ -39,7 +39,7 @@ Moving our `create_ticket` function from the last section into our lambda will t
 Copy the `settings.py` you set up in the `tutorial/` directory into `automation_lambda/`.
 
 ```
-cp tutorial/settings.py automataion_lambda/
+cp tutorial/settings.py automation_lambda/
 ```
 
 #### Install dependencies
