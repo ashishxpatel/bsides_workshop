@@ -17,7 +17,10 @@ def lambda_handler(event, context):
         print(f"Creating ticket for {summary}")
         create_ticket(summary, json.dumps(alert_data))
     elif action == "remediate_security_groups":
-        remediate_open_security_groups()
+        remediation_summary = "\n".join(remediate_open_security_groups())
+        if remediation_summary != "":
+            print(f"Creating ticket for {remediation_summary}")
+            create_ticket("Remediated security groups", remediation_summary)
 
 
 def create_ticket(summary, description):
@@ -45,16 +48,12 @@ def open_security_groups():
     )
     groups_whitelist = ["allow_splunk_ports_ingress"]
     ports_whitelist = [22, 80, 443, 8080, 8000]
-    test_failsafe = "despicable"
-    open_groups = []
+    open_groups = {}
     for sg in security_groups["SecurityGroups"]:
         for permission in sg["IpPermissions"]:
             if sg["GroupName"] not in groups_whitelist and permission["ToPort"] not in ports_whitelist:
-                if test_failsafe not in sg["GroupName"]:
-                    # Make sure we only match a group with "despicable" in its name, just in case...
-                    continue
-                open_groups.append(sg["GroupId"])
-    return list(set(open_groups))
+                open_groups[sg["GroupId"]] = sg["GroupName"]
+    return open_groups
 
 open_security_groups()
 
@@ -84,32 +83,36 @@ def instance_security_groups():
 
 def remove_security_group(instance_id, sg_id):
     ec2 = boto3.client('ec2')
-    group_name = 'default'
-    response = ec2.describe_security_groups(
+    default_group_id = ec2.describe_security_groups(
         Filters=[
-            dict(Name='group-name', Values=[group_name])
+            dict(Name='group-name', Values=['default'])
         ]
-    )
-    default_group_id = response['SecurityGroups'][0]['GroupId']
+    )['SecurityGroups'][0]['GroupId']
+    this_group_name = ec2.describe_security_groups(
+        Filters=[
+            dict(Name='group-id', Values=[sg_id])
+        ]
+    )['SecurityGroups'][0]['GroupName']
     ec2_resource = boto3.resource("ec2")
+    # Here we check if the word "despicable" is in the security group and refuse to delete if not.
+    # We don't want accidentally delete something!
+    if not "despicable" in this_group_name:
+        return f"Cowardly refusing to delete non-despicable group {this_group_name} ({sg_id})"
     instance = ec2_resource.Instance(instance_id)
     new_groups = [g["GroupId"] for g in instance.security_groups if g["GroupId"] != sg_id]
     # Security groups can't be empty, so if this list is empty use the default security group
     if not new_groups:
         new_groups = [default_group_id]
     instance.modify_attribute(Groups=new_groups)
+    return "Done"
 
 
 def remediate_open_security_groups():
-    open_groups = open_security_groups()
+    open_groups = open_security_groups().keys()
     instance_groups = instance_security_groups()
-    ticket_description = ""
+    removal_summary = []
     for instance, groups in instance_groups.items():
         instance_open_groups = list(set(groups).intersection(open_groups))
         for group in instance_open_groups:
-            ticket_description += f"Removing {group} from {instance}\n"
-            remove_security_group(instance, group)
-    if not ticket_description:
-        print("No open security groups - No action taken")
-    issue = create_ticket("Remediated security groups", ticket_description)
-    print(f"Created {issue.key}: {ticket_description}")
+            removal_summary.append(f"Removing {group} from {instance}: {remove_security_group(instance, group)}")
+    return removal_summary

@@ -19,8 +19,7 @@ MacOS/Linux Quickstart:
 curl -O https://releases.hashicorp.com/terraform/0.12.19/terraform_0.12.19_darwin_amd64.zip
 unzip terraform_0.12.19_darwin_amd64.zip
 rm terraform_0.12.19_darwin_amd64.zip
-export PATH=$PATH:`pwd`
-terraform --version # verify installation
+./terraform --version # verify installation
 ```
 
 More information: https://learn.hashicorp.com/terraform/getting-started/install.html
@@ -82,18 +81,18 @@ Note that we are using the `us-west-2` AWS region as it is geographically nearby
 #### Create Infrastructure with Terraform
 Initialize your Terraform directory:
 ```
-terraform init
+./terraform init
 ```
 
 See what Terraform is going to do:
 ```
-terraform plan
+./terraform plan
 ```
 
 Check that the plan looks good, then apply the plan to create these resources in AWS:
 
 ```
-terraform apply
+./terraform apply
 ```
 
 Now we'll have our Splunk server and CloudTrail created with the appropriate S3 bucket.
@@ -102,11 +101,11 @@ When we're done with this infrastructure, we will take it all down with:
 
 ```
 # Don't run this yet!
-terraform destroy
+./terraform destroy
 ```
 
 #### Start Jupyter Notebook
-Several of the sections in this tutorial are implemented in Jupyter Notebooks. GitHub will render these in your browser, but interacting with them locally (which is strongly suggested) will require starting the Jupyter Notebook server in a terminal:
+Several of the sections in this tutorial are implemented in Jupyter Notebooks. GitHub will render these in your browser, but interacting with them locally (which is strongly suggested) will require starting the Jupyter Notebook server in a NEW terminal:
 
 ```
 source venv/bin/activate

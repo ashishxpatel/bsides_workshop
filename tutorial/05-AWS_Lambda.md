@@ -26,8 +26,8 @@ Changing Lambdas through the web UI is useful for simple exploration, but isn't 
 
 To make a change and apply with Terraform, just edit `automation_lambda/automation_lambda.py` to print `Hello, Terraform`, then run
 ```
-terraform plan
-terraform apply
+./terraform plan
+./terraform apply
 ```
 
 Terraform will then update the lambda with your local copy.
@@ -45,7 +45,7 @@ cp tutorial/settings.py automation_lambda/
 #### Install dependencies
 Next we have to install dependencies for the `jira` Python package. There are a number of tools and frameworks for managing Lambda functions, but for simplicity we will just use `pip` to install dependencies directly to our directory:
 ```
-pip install --target ./automation_lambda/ jira
+pip3 install --target ./automation_lambda/ jira
 ```
 
 #### Copy create_ticket code
@@ -53,13 +53,14 @@ Finally, we can just copy-and-paste the code we developed in the last section in
 
 #### Shortcut option!
 If you don't have time to write your own function and just want to see the end result, we have a fully-implemented solution in `automation_lambda_solution.py`:
-```mv automation_lambda/automation_lambda_solutions.py automation_lambda/automation_lambda.py```
+
+```cp automation_lambda/automation_lambda_solutions.py automation_lambda/automation_lambda.py```
 
 #### Apply and test
 Push our latest code to AWS with Terraform:
 ```
-terraform plan
-terraform apply
+./terraform plan
+./terraform apply
 ```
 then we can try testing the lambda again. If all went well, we will create a ticket in Jira!
 
