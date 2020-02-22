@@ -13,9 +13,12 @@ Create an open security group for testing. Note that our example code has a hard
 ![security_group_assignment_2.png](images/security_group_assignment_2.png?raw=true "security_group_assignment_2.png")
 
 #### Set up a new alert
+You can set up a new alert with the following query and configuration.
+```index=main sourcetype=aws:cloudtrail eventName=*SecurityGroup* NOT eventName=DescribeSecurityGroups```
 ![security_group_remediation1.png](images/security_group_remediation1.png?raw=true "security_group_remediation1.png")
 
 ![security_group_remediation2.png](images/security_group_remediation2.png?raw=true "security_group_remediation2.png")
 
+The event message field should contain ```remediate_security_groups```
 #### Automate all the things!
 If everything worked right, the open security group will have been removed and you'll have a new ticket documenting that action.
